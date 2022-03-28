@@ -17,8 +17,11 @@ By default, the source ISO image is checked for integrity and authenticity using
 ### Requirements
 Tested on a host running Ubuntu 16.04.7 and 18.04.6.
 - Utilities required:
-    - ```p7zip-full```
-    - ```mkisofs``` or ```genisoimage```
+    - ```xorriso```
+    - ```sed```
+    - ```curl```
+    - ```gpg```
+    - ```isolinux```
 
 ### Usage
 ```
