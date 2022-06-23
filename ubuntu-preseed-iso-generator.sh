@@ -44,6 +44,7 @@ Available options:
 -V, --version           Select the Ubuntu version to choose from (default: ${ubuntu_version}).
 -r, --use-release-iso   Use the current release ISO instead of the daily ISO. The file will be used if it already
                         exists.
+-a, --additional-files  Specifies an optional folder which contains additional files, which will be copied to the iso root
 -s, --source            Source ISO file. By default the latest daily ISO for Ubuntu ${ubuntu_version^} will be downloaded
                         and saved as ${script_dir}/${original_iso}
                         That file will be used by default if it already exists.
@@ -61,6 +62,7 @@ function parse_params() {
         download_iso="${ubuntu_version}-live-server-amd64.iso"
         original_iso="ubuntu-original-$today.iso"
         source_iso="${script_dir}/${original_iso}"
+        additional_files_folder=""
         destination_iso="${script_dir}/ubuntu-preseed-$today.iso"
         sha_suffix="${today}"
         gpg_verify=1
@@ -80,6 +82,10 @@ function parse_params() {
                         shift
                         ;;
                 -r | --use-release-iso) use_release_iso=1 ;;
+                -A | --additional-files)
+                        additional_files_folder="${2-}"
+                        shift
+                        ;;
                 -s | --source)
                         source_iso="${2-}"
                         shift
@@ -220,6 +226,12 @@ log "👍 Added parameters to UEFI and BIOS kernel command lines."
 log "🧩 Adding preseed configuration file..."
 cp "$preseed_file" "$tmpdir/preseed/custom.seed"
 log "👍 Added preseed file"
+
+if [[ -n "$additional_files_folder" ]]; then
+  log "➕ Adding additional files to the iso image..."
+  cp -R "$additional_files_folder/." "$tmpdir/"
+  log "👍 Added additional files"
+fi
 
 log "👷 Updating $tmpdir/md5sum.txt with hashes of modified files..."
 # Using the full list of hashes causes long delays at boot.
