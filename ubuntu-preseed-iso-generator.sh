@@ -200,18 +200,21 @@ if [ ${gpg_verify} -eq 1 ]; then
 else
         log "🤞 Skipping verification of source ISO."
 fi
+
 log "🔧 Extracting ISO image..."
-xorriso -osirrox on -indev "${source_iso}" -extract / "$tmpdir" &>/dev/null
+xorriso \
+        -osirrox on \
+        -indev "${source_iso}" \
+        -extract / "$tmpdir" \
+        &>/dev/null
 chmod -R u+w "$tmpdir"
 rm -rf "$tmpdir/"'[BOOT]'
 log "👍 Extracted to $tmpdir"
 
 log "🧩 Adding preseed parameters to kernel command line..."
-
 # These are for UEFI mode
-sed -i -e 's,file=/cdrom/preseed/ubuntu.seed maybe-ubiquity quiet splash,file=/cdrom/preseed/custom.seed auto=true priority=critical boot=casper automatic-ubiquity quiet splash noprompt noshell,g' "$tmpdir/boot/grub/grub.cfg"
-sed -i -e 's,file=/cdrom/preseed/ubuntu.seed maybe-ubiquity iso-scan/filename=${iso_path} quiet splash,file=/cdrom/preseed/custom.seed auto=true priority=critical boot=casper automatic-ubiquity quiet splash noprompt noshell,g' "$tmpdir/boot/grub/loopback.cfg"
-
+sed -i -e 's,file=/cdrom/preseed/ubuntu.*.seed .*,file=/cdrom/preseed/custom.seed auto=true debian-installer/locale=en_US keyboard-configuration/layoutcode=us languagechooser/language-name=English countrychooser/shortlist=US localechooser/supported-locales=en_US.UTF-8 priority=critical boot=casper automatic-ubiquity quiet splash noprompt noshell,g' "$tmpdir/boot/grub/grub.cfg"
+sed -i -e 's,file=/cdrom/preseed/ubuntu.*.seed .*,file=/cdrom/preseed/custom.seed auto=true debian-installer/locale=en_US keyboard-configuration/layoutcode=us languagechooser/language-name=English countrychooser/shortlist=US localechooser/supported-locales=en_US.UTF-8 priority=critical boot=casper automatic-ubiquity quiet splash noprompt noshell,g' "$tmpdir/boot/grub/loopback.cfg"
 # This one is used for BIOS mode
 cat <<EOF > "$tmpdir/isolinux/txt.cfg"
 default live-install
@@ -220,7 +223,6 @@ label live-install
   kernel /casper/vmlinuz
   append  file=/cdrom/preseed/custom.seed auto=true priority=critical boot=casper automatic-ubiquity initrd=/casper/initrd quiet splash noprompt noshell ---
 EOF
-
 log "👍 Added parameters to UEFI and BIOS kernel command lines."
 
 log "🧩 Adding preseed configuration file..."
@@ -244,7 +246,25 @@ log "👍 Updated hashes."
 
 log "📦 Repackaging extracted files into an ISO image..."
 cd "$tmpdir"
-xorriso -as mkisofs -r -V "ubuntu-preseed-$today" -J -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin -boot-info-table -input-charset utf-8 -eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot -isohybrid-gpt-basdat -o "${destination_iso}" . &>/dev/null
+xorriso \
+        -as mkisofs \
+                -r \
+                -V "ubuntu-preseed-$today" \
+                -J \
+                -b isolinux/isolinux.bin \
+                -c isolinux/boot.cat \
+                -no-emul-boot \
+                -boot-load-size 4 \
+                -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+                -boot-info-table \
+                -input-charset utf-8 \
+                -eltorito-alt-boot \
+                -e boot/grub/efi.img \
+                -no-emul-boot \
+                -isohybrid-gpt-basdat \
+                -o "${destination_iso}" \
+                . \
+        &>/dev/null
 cd "$OLDPWD"
 log "👍 Repackaged into ${destination_iso}"
 
