@@ -223,6 +223,12 @@ label live-install
   kernel /casper/vmlinuz
   append  file=/cdrom/preseed/custom.seed auto=true priority=critical boot=casper automatic-ubiquity initrd=/casper/initrd quiet splash noprompt noshell ---
 EOF
+# reduce grub timeout to 1s
+if grep -q "set timeout" "$tmpdir/boot/grub/grub.cfg"; then
+        sed -i -e 's/set timeout=.*/set timeout=1/g' "$tmpdir/boot/grub/grub.cfg"
+else
+        echo "set timeout=1" >> "$tmpdir/boot/grub/grub.cfg"
+fi
 log "👍 Added parameters to UEFI and BIOS kernel command lines."
 
 log "🧩 Adding preseed configuration file..."
